@@ -11,6 +11,11 @@
 
 Polymorph1701 = {}
 
+-- Print feedback message to the player
+local function PrintMessage(msg)
+    DEFAULT_CHAT_FRAME:AddMessage("|cFF69CCF0[Polymorph]|r " .. msg)
+end
+
 -- Creature types that can be polymorphed
 local POLYMORPHABLE_TYPES = {
     ["Humanoid"] = true,
@@ -135,19 +140,25 @@ local function DoPolymorphMacro()
     end
 
     -- No attackable group members - check current target
-    if UnitExists("target") then
-        if not UnitCanAttack("player", "target") then
-            return
-        end
-
-        if not IsPolymorphable("target") then
-            return
-        end
-
-        -- Cast random polymorph on target (no announcement)
-        local spell = GetRandomPolymorphSpell()
-        CastSpellByName(spell)
+    if not UnitExists("target") then
+        PrintMessage("No target selected.")
+        return
     end
+
+    if not UnitCanAttack("player", "target") then
+        PrintMessage("Cannot attack " .. UnitName("target") .. ".")
+        return
+    end
+
+    if not IsPolymorphable("target") then
+        local creatureType = UnitCreatureType("target") or "Unknown"
+        PrintMessage(UnitName("target") .. " cannot be polymorphed (" .. creatureType .. ").")
+        return
+    end
+
+    -- Cast random polymorph on target (no announcement)
+    local spell = GetRandomPolymorphSpell()
+    CastSpellByName(spell)
 end
 
 -- Slash command handler
