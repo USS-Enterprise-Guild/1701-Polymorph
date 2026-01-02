@@ -11,14 +11,6 @@
 
 Polymorph1701 = {}
 
--- Polymorph spell variants (will check which ones the player knows)
-local POLYMORPH_SPELLS = {
-    "Polymorph",
-    "Polymorph: Pig",
-    "Polymorph: Turtle",
-    "Polymorph: Black Cat",
-}
-
 -- Creature types that can be polymorphed
 local POLYMORPHABLE_TYPES = {
     ["Humanoid"] = true,
@@ -31,26 +23,24 @@ local function GetKnownPolymorphSpells()
     local known = {}
     local i = 1
 
-    -- Scan spellbook for polymorph spells
+    -- Scan spellbook for any spell starting with "Polymorph"
     while true do
         local spellName = GetSpellName(i, BOOKTYPE_SPELL)
         if not spellName then
             break
         end
 
-        for _, polySpell in ipairs(POLYMORPH_SPELLS) do
-            if spellName == polySpell or string.find(spellName, "^Polymorph") then
-                -- Check if we already have this spell
-                local found = false
-                for _, k in ipairs(known) do
-                    if k == spellName then
-                        found = true
-                        break
-                    end
+        if string.find(spellName, "^Polymorph") then
+            -- Check if we already have this spell (avoid duplicates from different ranks)
+            local found = false
+            for _, k in ipairs(known) do
+                if k == spellName then
+                    found = true
+                    break
                 end
-                if not found then
-                    table.insert(known, spellName)
-                end
+            end
+            if not found then
+                table.insert(known, spellName)
             end
         end
         i = i + 1
