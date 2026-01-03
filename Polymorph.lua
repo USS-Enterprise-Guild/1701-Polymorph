@@ -1,12 +1,15 @@
 --[[
     Polymorph - Smart Polymorph Addon for WoW 1.12
 
-    Usage: /poly
+    Usage:
+        /poly     - Polymorph MC'd players, or fall back to current target
+        /poly mc  - Only polymorph MC'd players, ignore current target
 
     Behavior:
     1. Scans raid/party for attackable members (mind-controlled players)
     2. If found, polymorphs them and announces to raid/party/say
     3. If no attackable members, casts random polymorph on current target
+       (unless "mc" parameter is used)
 ]]
 
 Polymorph1701 = {}
@@ -179,7 +182,7 @@ local function AnnouncePolymorph(targetName)
 end
 
 -- Main polymorph function
-local function DoPolymorphMacro()
+local function DoPolymorphMacro(mcOnly)
     -- First, check for attackable raid/party members (MC'd players)
     local unit, name = FindAttackableGroupMember()
 
@@ -190,6 +193,11 @@ local function DoPolymorphMacro()
         -- Target and cast
         TargetUnit(unit)
         CastSpellByName("Polymorph")
+        return
+    end
+
+    -- If MC-only mode, don't fall back to target
+    if mcOnly then
         return
     end
 
@@ -217,7 +225,9 @@ end
 
 -- Slash command handler
 local function SlashCmdHandler(msg)
-    DoPolymorphMacro()
+    local cmd = string.lower(msg or "")
+    local mcOnly = (cmd == "mc")
+    DoPolymorphMacro(mcOnly)
 end
 
 -- Create addon frame for event handling
