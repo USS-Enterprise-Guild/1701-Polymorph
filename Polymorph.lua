@@ -11,6 +11,10 @@
 
 Polymorph1701 = {}
 
+-- Track players already announced (to prevent spam)
+local announcedOutOfRange = {}
+local announcedInRange = {}
+
 -- Print feedback message to the player
 local function PrintMessage(msg)
     DEFAULT_CHAT_FRAME:AddMessage("|cFF69CCF0[Polymorph]|r " .. msg)
@@ -90,13 +94,31 @@ end
 
 -- Find an attackable raid/party member
 local function FindAttackableGroupMember()
+    -- Track who is currently attackable
+    local currentlyAttackable = {}
+
     -- Check raid first
     local numRaid = GetNumRaidMembers()
     if numRaid > 0 then
         for i = 1, numRaid do
             local unit = "raid" .. i
             if UnitExists(unit) and UnitCanAttack("player", unit) then
-                return unit, UnitName(unit)
+                local name = UnitName(unit)
+                currentlyAttackable[name] = true
+                if IsSpellInRange("Polymorph", unit) == 1 then
+                    -- In range - clear from out-of-range table and return
+                    announcedOutOfRange[name] = nil
+                    return unit, name
+                else
+                    -- Out of range - clear from in-range table
+                    announcedInRange[name] = nil
+                    if not announcedOutOfRange[name] then
+                        announcedOutOfRange[name] = true
+                        local msg = name .. " is mind controlled but out of range!"
+                        PrintMessage(msg)
+                        SendChatMessage(msg, "RAID")
+                    end
+                end
             end
         end
     else
@@ -105,8 +127,35 @@ local function FindAttackableGroupMember()
         for i = 1, numParty do
             local unit = "party" .. i
             if UnitExists(unit) and UnitCanAttack("player", unit) then
-                return unit, UnitName(unit)
+                local name = UnitName(unit)
+                currentlyAttackable[name] = true
+                if IsSpellInRange("Polymorph", unit) == 1 then
+                    -- In range - clear from out-of-range table and return
+                    announcedOutOfRange[name] = nil
+                    return unit, name
+                else
+                    -- Out of range - clear from in-range table
+                    announcedInRange[name] = nil
+                    if not announcedOutOfRange[name] then
+                        announcedOutOfRange[name] = true
+                        local msg = name .. " is mind controlled but out of range!"
+                        PrintMessage(msg)
+                        SendChatMessage(msg, "PARTY")
+                    end
+                end
             end
+        end
+    end
+
+    -- Clear announced status for players no longer MC'd
+    for name in pairs(announcedOutOfRange) do
+        if not currentlyAttackable[name] then
+            announcedOutOfRange[name] = nil
+        end
+    end
+    for name in pairs(announcedInRange) do
+        if not currentlyAttackable[name] then
+            announcedInRange[name] = nil
         end
     end
 
@@ -115,6 +164,11 @@ end
 
 -- Send announcement to appropriate channel (only for MC'd players)
 local function AnnouncePolymorph(targetName)
+    if announcedInRange[targetName] then
+        return
+    end
+    announcedInRange[targetName] = true
+
     local message = "Polymorphing " .. targetName .. "! (Mind Controlled)"
 
     if GetNumRaidMembers() > 0 then
