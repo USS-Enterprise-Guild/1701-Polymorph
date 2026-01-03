@@ -190,9 +190,16 @@ local function DoPolymorphMacro(mcOnly)
         -- Found an attackable group member - polymorph them
         AnnouncePolymorph(name)
 
-        -- Target and cast
+        -- Save current target, cast, then restore
+        local hadTarget = UnitExists("target")
+        local previousTarget = hadTarget and UnitName("target") or nil
         TargetUnit(unit)
         CastSpellByName("Polymorph")
+        if previousTarget then
+            TargetByName(previousTarget)
+        elseif hadTarget then
+            ClearTarget()
+        end
         return
     end
 
