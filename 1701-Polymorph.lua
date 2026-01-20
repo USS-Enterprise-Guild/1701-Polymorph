@@ -18,6 +18,53 @@ Polymorph1701 = {}
 local announcedOutOfRange = {}
 local announcedInRange = {}
 
+-- Hidden action slot for range checking (IsSpellInRange doesn't exist in 1.12)
+local RANGE_CHECK_ACTION_SLOT = 120 -- Use last action slot to avoid conflicts
+local rangeCheckInitialized = false
+
+-- Initialize the range check action slot with Polymorph
+local function InitRangeCheckSlot()
+    if rangeCheckInitialized then return end
+
+    -- Find Polymorph in spellbook and place it on our hidden action slot
+    local i = 1
+    while true do
+        local spellName = GetSpellName(i, BOOKTYPE_SPELL)
+        if not spellName then
+            break
+        end
+        if spellName == "Polymorph" then
+            PickupSpell(i, BOOKTYPE_SPELL)
+            PlaceAction(RANGE_CHECK_ACTION_SLOT)
+            ClearCursor()
+            rangeCheckInitialized = true
+            break
+        end
+        i = i + 1
+    end
+end
+
+-- Check if Polymorph is in range of a unit using our hidden action slot
+local function IsPolymorphInRange(unit)
+    -- Temporarily target the unit to check range
+    local hadTarget = UnitExists("target")
+    local previousTarget = hadTarget and UnitName("target") or nil
+
+    TargetUnit(unit)
+    local inRange = IsActionInRange(RANGE_CHECK_ACTION_SLOT)
+
+    -- Restore previous target
+    if previousTarget then
+        TargetByName(previousTarget)
+    elseif hadTarget then
+        ClearTarget()
+    else
+        ClearTarget()
+    end
+
+    return inRange == 1
+end
+
 -- Print feedback message to the player
 local function PrintMessage(msg)
     DEFAULT_CHAT_FRAME:AddMessage("|cFF69CCF0[Polymorph]|r " .. msg)
@@ -108,7 +155,7 @@ local function FindAttackableGroupMember()
             if UnitExists(unit) and UnitCanAttack("player", unit) then
                 local name = UnitName(unit)
                 currentlyAttackable[name] = true
-                if IsSpellInRange("Polymorph", unit) == 1 then
+                if IsPolymorphInRange(unit) then
                     -- In range - clear from out-of-range table and return
                     announcedOutOfRange[name] = nil
                     return unit, name
@@ -132,7 +179,7 @@ local function FindAttackableGroupMember()
             if UnitExists(unit) and UnitCanAttack("player", unit) then
                 local name = UnitName(unit)
                 currentlyAttackable[name] = true
-                if IsSpellInRange("Polymorph", unit) == 1 then
+                if IsPolymorphInRange(unit) then
                     -- In range - clear from out-of-range table and return
                     announcedOutOfRange[name] = nil
                     return unit, name
@@ -244,6 +291,9 @@ frame:SetScript("OnEvent", function()
     -- Register slash commands on VARIABLES_LOADED to ensure proper initialization
     SLASH_POLYMORPH17011 = "/poly"
     SlashCmdList["POLYMORPH1701"] = SlashCmdHandler
+
+    -- Initialize range checking action slot
+    InitRangeCheckSlot()
 end)
 
 -- Export for external use
