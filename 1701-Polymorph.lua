@@ -19,8 +19,8 @@ local announcedOutOfRange = {}
 local announcedInRange = {}
 
 -- Hidden action slot for range checking (IsSpellInRange doesn't exist in 1.12)
--- Slot 72 = last slot of Right Action Bar 2, exists for all classes
-local RANGE_CHECK_ACTION_SLOT = 72
+-- Slot 24 = last slot of Main Action Bar page 2
+local RANGE_CHECK_ACTION_SLOT = 24
 local rangeCheckInitialized = false
 
 -- Initialize the range check action slot with Polymorph
