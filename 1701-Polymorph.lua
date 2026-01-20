@@ -19,7 +19,8 @@ local announcedOutOfRange = {}
 local announcedInRange = {}
 
 -- Hidden action slot for range checking (IsSpellInRange doesn't exist in 1.12)
-local RANGE_CHECK_ACTION_SLOT = 120 -- Use last action slot to avoid conflicts
+-- Slot 72 = last slot of Right Action Bar 2, exists for all classes
+local RANGE_CHECK_ACTION_SLOT = 72
 local rangeCheckInitialized = false
 
 -- Initialize the range check action slot with Polymorph
@@ -36,8 +37,13 @@ local function InitRangeCheckSlot()
         if spellName == "Polymorph" then
             PickupSpell(i, BOOKTYPE_SPELL)
             PlaceAction(RANGE_CHECK_ACTION_SLOT)
-            ClearCursor()
-            rangeCheckInitialized = true
+            -- Only clear cursor if we successfully placed the action
+            if CursorHasSpell() then
+                ClearCursor()
+                PrintMessage("Warning: Could not place Polymorph on action slot for range checking.")
+            else
+                rangeCheckInitialized = true
+            end
             break
         end
         i = i + 1
