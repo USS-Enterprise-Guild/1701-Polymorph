@@ -236,10 +236,8 @@ end
 
 -- Main polymorph function
 local function DoPolymorphMacro(mcOnly)
-    PrintMessage("DEBUG: DoPolymorphMacro called, mcOnly=" .. tostring(mcOnly))
     -- First, check for attackable raid/party members (MC'd players)
     local unit, name = FindAttackableGroupMember()
-    PrintMessage("DEBUG: Found unit=[" .. tostring(unit) .. "] name=[" .. tostring(name) .. "]")
 
     if unit and name then
         -- Found an attackable group member - polymorph them
@@ -287,7 +285,6 @@ end
 
 -- Slash command handler
 local function SlashCmdHandler(msg)
-    PrintMessage("DEBUG: Handler called, msg=[" .. (msg or "nil") .. "]")
     local cmd = string.lower(msg or "")
     local mcOnly = (cmd == "mc")
     DoPolymorphMacro(mcOnly)
