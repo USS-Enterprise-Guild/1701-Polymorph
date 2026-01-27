@@ -54,16 +54,14 @@ end
 local function IsPolymorphInRange(unit)
     -- Temporarily target the unit to check range
     local hadTarget = UnitExists("target")
-    local previousTarget = hadTarget and UnitName("target") or nil
 
     TargetUnit(unit)
     local inRange = IsActionInRange(RANGE_CHECK_ACTION_SLOT)
 
-    -- Restore previous target
-    if previousTarget then
-        TargetByName(previousTarget)
-    elseif hadTarget then
-        ClearTarget()
+    -- Restore previous target using TargetLastEnemy to get the actual unit,
+    -- not just the closest mob with the same name
+    if hadTarget then
+        TargetLastEnemy()
     else
         ClearTarget()
     end
@@ -245,12 +243,13 @@ local function DoPolymorphMacro(mcOnly)
 
         -- Save current target, cast, then restore
         local hadTarget = UnitExists("target")
-        local previousTarget = hadTarget and UnitName("target") or nil
         TargetUnit(unit)
         CastSpellByName("Polymorph")
-        if previousTarget then
-            TargetByName(previousTarget)
-        elseif hadTarget then
+        -- Restore previous target using TargetLastEnemy to get the actual unit,
+        -- not just the closest mob with the same name
+        if hadTarget then
+            TargetLastEnemy()
+        else
             ClearTarget()
         end
         return
