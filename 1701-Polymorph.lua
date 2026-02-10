@@ -81,6 +81,35 @@ local POLYMORPHABLE_TYPES = {
     ["Critter"] = true,
 }
 
+-- Polymorph debuff textures (all variants)
+local POLYMORPH_DEBUFF_TEXTURES = {
+    ["Interface\\Icons\\Spell_Nature_Polymorph"] = true,        -- Sheep
+    ["Interface\\Icons\\Spell_Magic_PolymorphPig"] = true,      -- Pig
+    ["Interface\\Icons\\Ability_Hunter_Pet_Turtle"] = true,     -- Turtle
+}
+
+-- Check if a unit is currently polymorphed
+local function IsPolymorphed(unit)
+    if not UnitExists(unit) then
+        return false
+    end
+
+    -- Scan debuffs (WoW 1.12 only returns texture from UnitDebuff)
+    local i = 1
+    while true do
+        local texture = UnitDebuff(unit, i)
+        if not texture then
+            break
+        end
+        if POLYMORPH_DEBUFF_TEXTURES[texture] then
+            return true
+        end
+        i = i + 1
+    end
+
+    return false
+end
+
 -- Get list of polymorph spells the player knows
 local function GetKnownPolymorphSpells()
     local known = {}
@@ -156,7 +185,7 @@ local function FindAttackableGroupMember()
     if numRaid > 0 then
         for i = 1, numRaid do
             local unit = "raid" .. i
-            if UnitExists(unit) and UnitCanAttack("player", unit) then
+            if UnitExists(unit) and UnitCanAttack("player", unit) and not IsPolymorphed(unit) then
                 local name = UnitName(unit)
                 currentlyAttackable[name] = true
                 if IsPolymorphInRange(unit) then
@@ -180,7 +209,7 @@ local function FindAttackableGroupMember()
         local numParty = GetNumPartyMembers()
         for i = 1, numParty do
             local unit = "party" .. i
-            if UnitExists(unit) and UnitCanAttack("player", unit) then
+            if UnitExists(unit) and UnitCanAttack("player", unit) and not IsPolymorphed(unit) then
                 local name = UnitName(unit)
                 currentlyAttackable[name] = true
                 if IsPolymorphInRange(unit) then
@@ -274,6 +303,11 @@ local function DoPolymorphMacro(mcOnly)
     if not IsPolymorphable("target") then
         local creatureType = UnitCreatureType("target") or "Unknown"
         PrintMessage(UnitName("target") .. " cannot be polymorphed (" .. creatureType .. ").")
+        return
+    end
+
+    if IsPolymorphed("target") then
+        PrintMessage(UnitName("target") .. " is already polymorphed.")
         return
     end
 
