@@ -314,6 +314,9 @@ local function DoPolymorphMacro(mcOnly)
     -- Cast random polymorph on target (no announcement)
     local spell = GetRandomPolymorphSpell()
     CastSpellByName(spell)
+    -- Switch back to previous target immediately so nampower's queued spell
+    -- doesn't fire at the polymorphed target and break it
+    TargetLastEnemy()
 end
 
 -- Slash command handler
